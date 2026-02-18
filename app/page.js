@@ -1,65 +1,95 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import Link from "next/link";
+import {
+  ArrowRight,
+  Shield,
+  FileText,
+  Lock,
+  PlusCircle,
+  Activity,
+} from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+
+export default function Dashboard() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="max-w-6xl mx-auto space-y-12 py-10">
+      {/* Hero / Status Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="md:col-span-2 space-y-6">
+          <div>
+            <div className="inline-flex items-center px-3 py-1 rounded-full bg-red-50 text-red-600 text-xs font-bold uppercase tracking-wider mb-4 border border-red-100">
+              <span className="w-2 h-2 rounded-full bg-red-600 mr-2 animate-pulse"></span>
+              System Status: Active
+            </div>
+            <h1 className="text-5xl font-black tracking-tighter text-black mb-2">
+              SOFT TARGET <span className="text-red-600">DASHBOARD</span>
+            </h1>
+            <p className="text-xl text-gray-500 max-w-lg">
+              Secure investigation documentation and target analysis system.
+            </p>
+          </div>
+
+          <div className="flex gap-4">
+            <Link href="/create">
+              <Button
+                size="lg"
+                className="h-16 px-8 text-lg font-bold shadow-lg shadow-red-500/20"
+              >
+                <PlusCircle className="mr-2 h-6 w-6" /> INITIATE REPORT
+              </Button>
+            </Link>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </div>
+
+      {/* Feature Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="hover:border-red-600/50 transition-colors cursor-pointer group">
+          <CardContent className="pt-6 flex flex-col items-center text-center space-y-4">
+            <div className="p-4 rounded-full bg-red-50 text-red-600 group-hover:bg-red-600 group-hover:text-white transition-colors">
+              <FileText className="h-8 w-8" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold">Standardized Reporting</h3>
+              <p className="text-sm text-gray-500 mt-2">
+                Generate consistent, court-ready investigation documents with a
+                single click.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:border-red-600/50 transition-colors cursor-pointer group">
+          <CardContent className="pt-6 flex flex-col items-center text-center space-y-4">
+            <div className="p-4 rounded-full bg-red-50 text-red-600 group-hover:bg-red-600 group-hover:text-white transition-colors">
+              <Shield className="h-8 w-8" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold">Secure Local Environment</h3>
+              <p className="text-sm text-gray-500 mt-2">
+                Data stays on your device. Zero server-side retention for
+                maximum security.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:border-red-600/50 transition-colors cursor-pointer group">
+          <CardContent className="pt-6 flex flex-col items-center text-center space-y-4">
+            <div className="p-4 rounded-full bg-red-50 text-red-600 group-hover:bg-red-600 group-hover:text-white transition-colors">
+              <Lock className="h-8 w-8" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold">Encrypted Export</h3>
+              <p className="text-sm text-gray-500 mt-2">
+                High-fidelity PDF generation with advanced layout preservation.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

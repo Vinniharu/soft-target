@@ -1,36 +1,157 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Soft Target
 
-## Getting Started
+Soft Target is a **frontend-only web application** for generating structured investigation-style documents from user-inputted data.
 
-First, run the development server:
+The app allows users to input case details, IMEI numbers, target numbers, locations, and a dynamic list of soft targets, then automatically renders a **formatted document layout** identical to an official report. The generated document can be previewed and exported as an image or PDF.
+
+This project is designed to replace **manual document creation** with a fast, repeatable, and error-free digital process.
+
+---
+
+## ✨ Features
+
+- Frontend-only (no backend required)
+- Structured form-based data entry
+- Dynamic **Soft Target list** (add / remove rows)
+- Real-time document preview
+- Export document as **image or PDF**
+- Print-ready layout
+- Clean, reusable UI components
+
+---
+
+## 🧱 Tech Stack
+
+- **Next.js (App Router)**
+- **React**
+- **Tailwind CSS**
+- **React Hook Form** (form handling)
+- **HTML-to-Image / PDF utility**
+
+---
+
+## 📄 Document Structure
+
+Each generated document includes:
+
+### Header Section
+
+- Date
+- Case ID
+
+### Target Information
+
+- IMEI (primary and optional secondary)
+- Target phone number(s)
+- Primary location
+- Coordinates
+
+### Soft Target Table (Dynamic)
+
+Each row contains:
+
+- Index number
+- Soft target phone number
+- Location / address
+- Latitude & longitude
+
+Users can dynamically **add or remove soft target rows** as needed.
+
+---
+
+## ➕ Dynamic Soft Target List
+
+The Soft Target list is fully dynamic:
+
+- "Add Soft Target" button appends a new row
+- Each row contains its own controlled inputs
+- Rows are automatically indexed
+- No hard limit on number of entries
+
+This makes the app flexible for small or large reports.
+
+---
+
+## 🖥️ Pages
+
+### 1. Create Document
+
+- Main form for all inputs
+- Dynamic soft target list
+- Live validation
+
+### 2. Document Preview
+
+- Displays the final formatted document
+- Matches print/export layout exactly
+
+---
+
+## 📤 Export Options
+
+- Download as **image (PNG/JPEG)**
+- Print to PDF
+
+The exported document matches the preview 1:1.
+
+---
+
+## 🚀 Getting Started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open:
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+```
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 📁 Suggested Folder Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+/app
+  /create
+  /preview
+/components
+  DocumentTemplate.tsx
+  SoftTargetRow.tsx
+  HeaderSection.tsx
+/lib
+  exportDocument.ts
+/styles
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🎯 Project Goal
 
-## Deploy on Vercel
+Soft Target is built to:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Eliminate repetitive manual document formatting
+- Improve accuracy and consistency
+- Speed up report generation
+- Serve as a lightweight internal company tool
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 📌 Future Enhancements
+
+- Multiple document templates
+- Company logo & branding
+- Saved drafts (local storage)
+- Editable exported documents
+
+---
+
+## 📄 License
+
+This project is intended for internal and private use.
+
+---
+
+**Soft Target** — structured documents, generated instantly.
