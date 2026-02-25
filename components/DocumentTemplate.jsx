@@ -54,14 +54,17 @@ const DocumentTemplate = forwardRef(({ data }, ref) => {
               </td>
             </tr>
             <tr className="border-b border-gray-100">
-              <td className="py-2.5 font-bold text-gray-500 uppercase text-xs tracking-wider">
+              <td className="py-2.5 font-bold w-1/4 text-gray-500 uppercase text-xs tracking-wider">
                 Phone Number
               </td>
-              <td
-                className="py-2.5 font-mono font-bold text-lg text-black"
-                colSpan="3"
-              >
+              <td className="py-2.5 font-mono font-bold text-lg text-black">
                 {data.target?.phone || "N/A"}
+              </td>
+              <td className="py-2.5 font-bold w-1/4 text-gray-500 uppercase text-xs tracking-wider">
+                Alt Number
+              </td>
+              <td className="py-2.5 font-mono font-bold text-lg text-black">
+                {data.target?.altPhone || "N/A"}
               </td>
             </tr>
             <tr className="border-b border-gray-100">

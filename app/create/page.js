@@ -39,6 +39,7 @@ export default function CreateDocument() {
         imei: "",
         imei2: "",
         phone: "",
+        altPhone: "",
         location: "",
         coordinates: "",
       },
@@ -160,16 +161,23 @@ export default function CreateDocument() {
                   {...register("target.phone")}
                 />
                 <Input
+                  label="Alternate Number"
+                  placeholder="+1 (XXX) XXX-XXXX"
+                  {...register("target.altPhone")}
+                />
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <Input
+                  label="Primary Location / Address"
+                  placeholder="Full residential or last known address"
+                  {...register("target.location")}
+                />
+                <Input
                   label="Coordinates"
                   placeholder="Lat, Lng"
                   {...register("target.coordinates")}
                 />
               </div>
-              <Input
-                label="Primary Location / Address"
-                placeholder="Full residential or last known address"
-                {...register("target.location")}
-              />
             </CardContent>
           </Card>
         </div>
