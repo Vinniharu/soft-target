@@ -70,16 +70,16 @@ export default function DashboardPage() {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Hero */}
-      <section className="pt-4 pb-12 md:pb-16">
+      <section className="pt-2 pb-10 md:pb-16">
         <div className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--color-muted-foreground)]">
           {today}
         </div>
-        <h1 className="mt-4 text-4xl md:text-5xl font-semibold tracking-tight text-[var(--color-foreground)] leading-[1.05]">
+        <h1 className="mt-4 text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-[var(--color-foreground)] leading-[1.05]">
           Welcome back,
           <br />
           <span className="text-[var(--color-primary)]">{firstName}.</span>
         </h1>
-        <p className="mt-5 text-lg text-[var(--color-muted-foreground)] max-w-xl leading-relaxed">
+        <p className="mt-4 text-base sm:text-lg text-[var(--color-muted-foreground)] max-w-xl leading-relaxed">
           {loading
             ? "Loading your workspace…"
             : total === 0
@@ -88,14 +88,14 @@ export default function DashboardPage() {
                 ? `${total} ${total === 1 ? "report" : "reports"} on file, ${updatedThisWeek} ${updatedThisWeek === 1 ? "updated" : "updated"} this week.`
                 : `${total} ${total === 1 ? "report" : "reports"} on file.`}
         </p>
-        <div className="mt-7 flex flex-wrap items-center gap-3">
-          <Link href="/reports/new">
-            <Button size="lg">
+        <div className="mt-6 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3">
+          <Link href="/reports/new" className="w-full sm:w-auto">
+            <Button size="lg" className="w-full sm:w-auto">
               <Plus className="h-4 w-4" /> Create a new report
             </Button>
           </Link>
-          <Link href="/reports">
-            <Button variant="ghost" size="lg">
+          <Link href="/reports" className="w-full sm:w-auto">
+            <Button variant="ghost" size="lg" className="w-full sm:w-auto">
               View all reports <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>

@@ -10,9 +10,13 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { useToast } from "@/lib/toast/ToastContext";
 import { formatApiError } from "@/lib/utils/format";
 
+function destinationFor(role) {
+  return role === "admin" ? "/dashboard" : "/reports";
+}
+
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isAuthenticated, hydrated } = useAuth();
+  const { login, isAuthenticated, hydrated, user } = useAuth();
   const toast = useToast();
   const [submitting, setSubmitting] = useState(false);
 
@@ -23,16 +27,30 @@ export default function LoginPage() {
   } = useForm({ defaultValues: { email: "", password: "" } });
 
   useEffect(() => {
-    if (hydrated && isAuthenticated) router.replace("/dashboard");
-  }, [hydrated, isAuthenticated, router]);
+    if (hydrated && isAuthenticated) {
+      router.replace(destinationFor(user?.role));
+    }
+  }, [hydrated, isAuthenticated, user, router]);
 
   const onSubmit = async ({ email, password }) => {
     setSubmitting(true);
     try {
-      await login(email, password);
-      router.replace("/dashboard");
+      const result = await login(email, password);
+      router.replace(destinationFor(result?.role));
     } catch (err) {
-      toast.error("Sign in failed", formatApiError(err, "Invalid credentials"));
+      if (err?.status === 429) {
+        toast.error(
+          "Too many attempts",
+          "You've made too many sign-in attempts. Please wait a few minutes and try again.",
+        );
+      } else if (err?.status === 401) {
+        toast.error("Sign in failed", "Invalid email or password.");
+      } else {
+        toast.error(
+          "Sign in failed",
+          formatApiError(err, "We couldn't sign you in. Please try again."),
+        );
+      }
     } finally {
       setSubmitting(false);
     }
@@ -42,7 +60,6 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col bg-[var(--color-background)]">
       <main className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm">
-          {/* Brand */}
           <div className="flex items-center gap-3 mb-10">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-primary)] text-[var(--color-primary-foreground)] font-semibold shadow-sm">
               ST
@@ -57,7 +74,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Heading */}
           <div className="mb-8">
             <h1 className="text-2xl font-semibold tracking-tight text-[var(--color-foreground)]">
               Sign in
@@ -67,7 +83,6 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <Input
               label="Email"

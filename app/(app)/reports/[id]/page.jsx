@@ -14,12 +14,14 @@ import { getReport } from "@/lib/api/reports";
 import { apiToForm } from "@/lib/utils/mapReport";
 import { formatDate, formatApiError } from "@/lib/utils/format";
 import { useToast } from "@/lib/toast/ToastContext";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 export default function ReportDetailPage() {
   const router = useRouter();
   const params = useParams();
   const reportId = params?.id;
   const toast = useToast();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState(null);
 
@@ -100,6 +102,10 @@ export default function ReportDetailPage() {
             <CardContent className="p-5 space-y-3 text-sm">
               <MetaRow label="Case ID" value={report.case_id} />
               <MetaRow label="Version" value={`v${report.version}`} />
+              <MetaRow
+                label="Created by"
+                value={user?.name || user?.email || "You"}
+              />
               <MetaRow label="Report ID" value={report.id} mono truncate />
               <MetaRow label="Created" value={formatDate(report.created_at)} />
               <MetaRow label="Updated" value={formatDate(report.updated_at)} />

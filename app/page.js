@@ -7,12 +7,16 @@ import { useAuth } from "@/lib/auth/AuthContext";
 
 export default function RootPage() {
   const router = useRouter();
-  const { isAuthenticated, hydrated } = useAuth();
+  const { isAuthenticated, hydrated, user } = useAuth();
 
   useEffect(() => {
     if (!hydrated) return;
-    router.replace(isAuthenticated ? "/dashboard" : "/login");
-  }, [hydrated, isAuthenticated, router]);
+    if (!isAuthenticated) {
+      router.replace("/login");
+      return;
+    }
+    router.replace(user?.role === "admin" ? "/dashboard" : "/reports");
+  }, [hydrated, isAuthenticated, user, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--color-background)]">

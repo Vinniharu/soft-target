@@ -1,17 +1,26 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Check,
+  RotateCcw,
+  Save,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card, CardContent } from "@/components/ui/Card";
+import { Spinner } from "@/components/ui/Spinner";
 import { SoftTargetFields } from "./SoftTargetFields";
 import { emptyForm, formToApi } from "@/lib/utils/mapReport";
-import { formatApiError } from "@/lib/utils/format";
+import { formatApiError, formatRelative } from "@/lib/utils/format";
 import { useToast } from "@/lib/toast/ToastContext";
+
+const AUTOSAVE_DEBOUNCE_MS = 1500;
 
 export function ReportForm({
   initialValues,
@@ -19,6 +28,10 @@ export function ReportForm({
   onSubmit,
   submitLabel,
   backHref,
+  onAutoSave,
+  autoSaveStatus,
+  onDiscardDraft,
+  draftRestoredAt,
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -29,8 +42,38 @@ export function ReportForm({
     register,
     control,
     handleSubmit,
+    watch,
+    reset,
     formState: { errors },
   } = useForm({ defaultValues: defaults });
+
+  // Re-seed the form whenever initialValues changes (e.g. draft loaded after mount)
+  useEffect(() => {
+    if (initialValues) reset(initialValues);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialValues]);
+
+  // Debounced autosave subscription. We hold the latest onAutoSave in a ref
+  // so a new function identity from the parent doesn't tear down the subscription.
+  const onAutoSaveRef = useRef(onAutoSave);
+  useEffect(() => {
+    onAutoSaveRef.current = onAutoSave;
+  }, [onAutoSave]);
+
+  useEffect(() => {
+    if (!onAutoSaveRef.current) return;
+    let timer = null;
+    const subscription = watch((value) => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (onAutoSaveRef.current) onAutoSaveRef.current(value);
+      }, AUTOSAVE_DEBOUNCE_MS);
+    });
+    return () => {
+      if (timer) clearTimeout(timer);
+      subscription.unsubscribe();
+    };
+  }, [watch]);
 
   const handleFormSubmit = async (form) => {
     setSubmitting(true);
@@ -59,6 +102,33 @@ export function ReportForm({
         >
           <ArrowLeft className="h-4 w-4" /> Back
         </Button>
+      )}
+
+      {draftRestoredAt && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-primary-subtle)] px-4 py-3">
+          <div className="flex items-start gap-3 text-sm">
+            <RotateCcw className="h-4 w-4 mt-0.5 text-[var(--color-primary)] flex-shrink-0" />
+            <div>
+              <div className="font-medium text-[var(--color-foreground)]">
+                Draft restored
+              </div>
+              <div className="text-xs text-[var(--color-muted-foreground)] mt-0.5">
+                Picked up where you left off · last saved{" "}
+                {formatRelative(draftRestoredAt)}.
+              </div>
+            </div>
+          </div>
+          {onDiscardDraft && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onDiscardDraft}
+            >
+              Start fresh
+            </Button>
+          )}
+        </div>
       )}
 
       <Card>
@@ -206,25 +276,28 @@ export function ReportForm({
         </CardContent>
       </Card>
 
-      {/* Sticky submit */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-card)]/95 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 px-6 md:px-10 py-3">
-          <div className="hidden md:block text-sm text-[var(--color-muted-foreground)]">
-            {mode === "edit"
-              ? "Saving will create a new version. The previous state is kept in history."
-              : "Submit to create the report and generate the PDF."}
+      {/* Sticky submit bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-card)]/95 backdrop-blur-sm pb-[env(safe-area-inset-bottom)]">
+        <div className="max-w-7xl mx-auto flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 px-4 sm:px-6 md:px-10 py-3">
+          <div className="flex items-center gap-3 text-xs sm:text-sm text-[var(--color-muted-foreground)] min-w-0">
+            <AutoSaveIndicator status={autoSaveStatus} mode={mode} />
           </div>
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-2 sm:ml-auto">
             {backHref && (
               <Button
                 type="button"
                 variant="ghost"
                 onClick={() => router.push(backHref)}
+                className="hidden sm:inline-flex"
               >
                 Cancel
               </Button>
             )}
-            <Button type="submit" isLoading={submitting}>
+            <Button
+              type="submit"
+              isLoading={submitting}
+              className="w-full sm:w-auto"
+            >
               <Save className="h-4 w-4" />
               {submitLabel || (mode === "edit" ? "Save changes" : "Create report")}
             </Button>
@@ -233,4 +306,42 @@ export function ReportForm({
       </div>
     </form>
   );
+}
+
+function AutoSaveIndicator({ status, mode }) {
+  if (mode === "edit" || !status) {
+    return (
+      <span className="truncate">
+        {mode === "edit"
+          ? "Saving will create a new version. The previous state is kept in history."
+          : "Submit to create the report and generate the PDF."}
+      </span>
+    );
+  }
+
+  if (status.state === "saving") {
+    return (
+      <span className="inline-flex items-center gap-2">
+        <Spinner size="sm" />
+        Saving draft…
+      </span>
+    );
+  }
+  if (status.state === "error") {
+    return (
+      <span className="inline-flex items-center gap-2 text-[var(--color-danger)]">
+        <AlertCircle className="h-3.5 w-3.5" />
+        Couldn't save draft
+      </span>
+    );
+  }
+  if (status.state === "saved" && status.lastSavedAt) {
+    return (
+      <span className="inline-flex items-center gap-2 text-[var(--color-success)]">
+        <Check className="h-3.5 w-3.5" />
+        Draft saved {formatRelative(status.lastSavedAt)}
+      </span>
+    );
+  }
+  return <span>Draft autosaves as you type.</span>;
 }

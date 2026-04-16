@@ -13,24 +13,11 @@ import {
   clearTokens,
   getTokens,
   saveTokens,
-  userFromTokens,
 } from "./tokenStorage";
 import { login as apiLogin } from "../api/auth";
 import { getMe } from "../api/me";
 
 const AuthContext = createContext(null);
-
-function mergeUser(jwtUser, profile) {
-  if (!profile) return jwtUser;
-  return {
-    id: profile.id ?? jwtUser?.id ?? null,
-    email: profile.email ?? jwtUser?.email ?? null,
-    name: profile.name ?? null,
-    role: profile.role ?? jwtUser?.role ?? "user",
-    created_at: profile.created_at ?? null,
-    updated_at: profile.updated_at ?? null,
-  };
-}
 
 export function AuthProvider({ children }) {
   const router = useRouter();
@@ -38,29 +25,36 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [hydrated, setHydrated] = useState(false);
 
-  const refreshProfile = useCallback(async (fallbackUser) => {
-    try {
-      const profile = await getMe();
-      setUser((prev) => mergeUser(prev || fallbackUser, profile));
-      return profile;
-    } catch {
-      // Keep JWT-derived user on failure (non-fatal)
-      return null;
-    }
-  }, []);
-
+  // Hydrate session on mount: if tokens exist, fetch /auth/me as the
+  // authoritative profile. Never decode the JWT client-side.
   useEffect(() => {
     const existing = getTokens();
-    if (existing) {
-      const jwtUser = userFromTokens(existing);
-      setTokens(existing);
-      setUser(jwtUser);
-      refreshProfile(jwtUser).finally(() => setHydrated(true));
-    } else {
+    if (!existing) {
       setHydrated(true);
+      return;
     }
-  }, [refreshProfile]);
+    setTokens(existing);
+    let cancelled = false;
+    getMe()
+      .then((profile) => {
+        if (!cancelled) setUser(profile);
+      })
+      .catch(() => {
+        // /me failed (token dead or refresh failed) — clear and continue
+        if (cancelled) return;
+        clearTokens();
+        setTokens(null);
+        setUser(null);
+      })
+      .finally(() => {
+        if (!cancelled) setHydrated(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
+  // Global "session expired" handler fired by the API client.
   useEffect(() => {
     const onExpired = () => {
       setTokens(null);
@@ -80,23 +74,35 @@ export function AuthProvider({ children }) {
     }
   }, [router]);
 
-  const login = useCallback(
-    async (email, password) => {
-      const result = await apiLogin(email, password);
-      saveTokens(result);
-      setTokens(result);
-      const jwtUser = userFromTokens(result);
-      // Seed role from login response immediately
-      const seeded = jwtUser
-        ? { ...jwtUser, role: result.role || jwtUser.role || "user" }
-        : { id: null, email, role: result.role || "user" };
-      setUser(seeded);
-      // Fetch authoritative profile (includes name)
-      await refreshProfile(seeded);
-      return result;
-    },
-    [refreshProfile],
-  );
+  const refreshProfile = useCallback(async () => {
+    try {
+      const profile = await getMe();
+      setUser(profile);
+      return profile;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const login = useCallback(async (email, password) => {
+    const result = await apiLogin(email, password);
+    saveTokens(result);
+    setTokens(result);
+    // Try to fetch the authoritative profile from /auth/me. Fall back to a
+    // minimal user object built from the login response if /me fails.
+    try {
+      const profile = await getMe();
+      setUser(profile);
+    } catch {
+      setUser({
+        id: null,
+        email,
+        name: null,
+        role: result.role || "user",
+      });
+    }
+    return result; // login form reads `role` for routing
+  }, []);
 
   const logout = useCallback(() => {
     clearTokens();
@@ -119,7 +125,9 @@ export function AuthProvider({ children }) {
     [tokens, user, hydrated, login, logout, refreshProfile],
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

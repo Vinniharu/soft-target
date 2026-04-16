@@ -13,6 +13,7 @@ import { ConfirmDialog } from "@/components/ui/Dialog";
 import { ReportPreviewPanel } from "@/components/reports/ReportPreviewPanel";
 import { getReport } from "@/lib/api/reports";
 import { deleteReport } from "@/lib/api/adminReports";
+import { listUsers } from "@/lib/api/users";
 import { apiToForm } from "@/lib/utils/mapReport";
 import { formatDate, formatApiError } from "@/lib/utils/format";
 import { useToast } from "@/lib/toast/ToastContext";
@@ -24,6 +25,7 @@ export default function AdminReportDetailPage() {
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState(null);
+  const [creator, setCreator] = useState(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -34,7 +36,21 @@ export default function AdminReportDetailPage() {
       setLoading(true);
       try {
         const data = await getReport(reportId);
-        if (!cancelled) setReport(data);
+        if (cancelled) return;
+        setReport(data);
+        // Look up the creator by user_id from the admin user list.
+        if (data?.user_id) {
+          try {
+            const users = await listUsers({ limit: 200 });
+            if (cancelled) return;
+            const owner = (users.items || []).find(
+              (u) => u.id === data.user_id,
+            );
+            setCreator(owner || null);
+          } catch {
+            // creator lookup is best-effort — fall back to user_id display
+          }
+        }
       } catch (err) {
         toast.error("Failed to load report", formatApiError(err));
       } finally {
@@ -134,6 +150,16 @@ export default function AdminReportDetailPage() {
             <CardContent className="p-5 space-y-3 text-sm">
               <MetaRow label="Case ID" value={report.case_id} />
               <MetaRow label="Version" value={`v${report.version}`} />
+              <MetaRow
+                label="Created by"
+                value={
+                  creator
+                    ? creator.name || creator.email || creator.id
+                    : report.user_id
+                      ? `${report.user_id.slice(0, 8)}…`
+                      : "Unknown"
+                }
+              />
               <MetaRow label="Report ID" value={report.id} mono />
               <MetaRow label="Owner ID" value={report.user_id} mono />
               <MetaRow label="Created" value={formatDate(report.created_at)} />

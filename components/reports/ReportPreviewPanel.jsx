@@ -130,10 +130,29 @@ export function ReportPreviewPanel({
         </Button>
       </div>
 
-      {/* Preview — DocumentTemplate is captured as-is; identical to download */}
-      <div className="flex justify-center p-2 md:p-6 bg-slate-900 rounded-lg overflow-auto">
-        <div className="scale-[0.55] sm:scale-[0.7] md:scale-[0.85] origin-top shadow-2xl">
-          <DocumentTemplate ref={reportRef} data={data} />
+      {/* Preview — DocumentTemplate is captured as-is; identical to download.
+          The outer wrapper has explicit dimensions so CSS scale() doesn't leak
+          empty layout space (which it would otherwise on phones). */}
+      <div className="bg-slate-900 rounded-lg overflow-x-auto">
+        <div className="p-3 md:p-6 flex justify-center">
+          <div
+            className="
+              flex-shrink-0 overflow-hidden shadow-2xl
+              w-[286px] h-[404px]
+              sm:w-[437px] sm:h-[618px]
+              md:w-[556px] md:h-[786px]
+              lg:w-[675px] lg:h-[955px]
+            "
+          >
+            <div
+              className="
+                origin-top-left
+                scale-[0.36] sm:scale-[0.55] md:scale-[0.7] lg:scale-[0.85]
+              "
+            >
+              <DocumentTemplate ref={reportRef} data={data} />
+            </div>
+          </div>
         </div>
       </div>
     </div>
