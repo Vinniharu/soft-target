@@ -13,10 +13,16 @@ import { ConfirmDialog } from "@/components/ui/Dialog";
 import { ReportPreviewPanel } from "@/components/reports/ReportPreviewPanel";
 import { getReport } from "@/lib/api/reports";
 import { deleteReport } from "@/lib/api/adminReports";
-import { listUsers } from "@/lib/api/users";
 import { apiToForm } from "@/lib/utils/mapReport";
 import { formatDate, formatApiError } from "@/lib/utils/format";
 import { useToast } from "@/lib/toast/ToastContext";
+
+function creatorLabel(creator, fallbackUserId) {
+  if (creator?.name) return creator.name;
+  if (creator?.email) return creator.email;
+  if (fallbackUserId) return `${fallbackUserId.slice(0, 8)}…`;
+  return "Unknown";
+}
 
 export default function AdminReportDetailPage() {
   const router = useRouter();
@@ -25,7 +31,6 @@ export default function AdminReportDetailPage() {
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState(null);
-  const [creator, setCreator] = useState(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -36,21 +41,7 @@ export default function AdminReportDetailPage() {
       setLoading(true);
       try {
         const data = await getReport(reportId);
-        if (cancelled) return;
-        setReport(data);
-        // Look up the creator by user_id from the admin user list.
-        if (data?.user_id) {
-          try {
-            const users = await listUsers({ limit: 200 });
-            if (cancelled) return;
-            const owner = (users.items || []).find(
-              (u) => u.id === data.user_id,
-            );
-            setCreator(owner || null);
-          } catch {
-            // creator lookup is best-effort — fall back to user_id display
-          }
-        }
+        if (!cancelled) setReport(data);
       } catch (err) {
         toast.error("Failed to load report", formatApiError(err));
       } finally {
@@ -91,6 +82,8 @@ export default function AdminReportDetailPage() {
   }
 
   const formShape = apiToForm(report);
+  const creatorName = creatorLabel(report.creator, report.user_id);
+  const creatorEmail = report.creator?.email;
 
   return (
     <div>
@@ -126,8 +119,7 @@ export default function AdminReportDetailPage() {
       >
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="secondary">Version {report.version}</Badge>
-          <Badge variant="outline">ID {report.id.slice(0, 8)}</Badge>
-          <Badge variant="outline">Owner {report.user_id?.slice(0, 8)}</Badge>
+          <Badge variant="outline">By {creatorName}</Badge>
         </div>
       </PageHeader>
 
@@ -150,16 +142,10 @@ export default function AdminReportDetailPage() {
             <CardContent className="p-5 space-y-3 text-sm">
               <MetaRow label="Case ID" value={report.case_id} />
               <MetaRow label="Version" value={`v${report.version}`} />
-              <MetaRow
-                label="Created by"
-                value={
-                  creator
-                    ? creator.name || creator.email || creator.id
-                    : report.user_id
-                      ? `${report.user_id.slice(0, 8)}…`
-                      : "Unknown"
-                }
-              />
+              <MetaRow label="Created by" value={creatorName} />
+              {creatorEmail && creatorEmail !== creatorName && (
+                <MetaRow label="Email" value={creatorEmail} />
+              )}
               <MetaRow label="Report ID" value={report.id} mono />
               <MetaRow label="Owner ID" value={report.user_id} mono />
               <MetaRow label="Created" value={formatDate(report.created_at)} />
