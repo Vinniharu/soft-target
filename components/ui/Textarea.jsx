@@ -1,7 +1,7 @@
 import React from "react";
 
-const Input = React.forwardRef(
-  ({ className = "", type, label, hint, error, ...props }, ref) => {
+const Textarea = React.forwardRef(
+  ({ className = "", label, hint, error, rows = 4, ...props }, ref) => {
     return (
       <div className="space-y-1.5 w-full">
         {label && (
@@ -9,14 +9,14 @@ const Input = React.forwardRef(
             {label}
           </label>
         )}
-        <input
-          type={type}
-          className={`flex h-10 w-full rounded-md border bg-[var(--color-input)] px-3 py-2 text-sm text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:border-transparent disabled:cursor-not-allowed disabled:opacity-50 ${
+        <textarea
+          ref={ref}
+          rows={rows}
+          className={`flex w-full rounded-md border bg-[var(--color-input)] px-3 py-2 text-sm text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:border-transparent disabled:cursor-not-allowed disabled:opacity-50 resize-y ${
             error
               ? "border-[var(--color-danger)]"
               : "border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
           } ${className}`}
-          ref={ref}
           {...props}
         />
         {hint && !error && (
@@ -29,6 +29,6 @@ const Input = React.forwardRef(
     );
   },
 );
-Input.displayName = "Input";
+Textarea.displayName = "Textarea";
 
-export { Input };
+export { Textarea };
