@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Info } from "lucide-react";
+import { ArrowLeft, Edit3, Info } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -13,6 +13,7 @@ import { ReportPreviewPanel } from "@/components/reports/ReportPreviewPanel";
 import { getReport } from "@/lib/api/reports";
 import { apiToForm } from "@/lib/utils/mapReport";
 import { formatDate, formatApiError } from "@/lib/utils/format";
+import { useAuth } from "@/lib/auth/AuthContext";
 import { useToast } from "@/lib/toast/ToastContext";
 
 export default function ReportDetailPage() {
@@ -20,6 +21,7 @@ export default function ReportDetailPage() {
   const params = useParams();
   const reportId = params?.id;
   const toast = useToast();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState(null);
 
@@ -57,6 +59,7 @@ export default function ReportDetailPage() {
   }
 
   const formShape = apiToForm(report);
+  const isOwner = !!user?.id && report.user_id === user.id;
 
   return (
     <div>
@@ -73,11 +76,20 @@ export default function ReportDetailPage() {
         eyebrow={`Case · v${report.version}`}
         title={report.case_id}
         description={`Filed ${formatDate(report.created_at)} · updated ${formatDate(report.updated_at)}`}
+        actions={
+          isOwner ? (
+            <Link href={`/reports/${report.id}/edit`}>
+              <Button variant="outline">
+                <Edit3 className="h-4 w-4" /> Edit
+              </Button>
+            </Link>
+          ) : null
+        }
       >
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="secondary">Version {report.version}</Badge>
           <Badge variant="outline">ID {report.id.slice(0, 8)}</Badge>
-          <Badge>Read only</Badge>
+          {!isOwner && <Badge>Read only</Badge>}
         </div>
       </PageHeader>
 
@@ -114,13 +126,15 @@ export default function ReportDetailPage() {
             </CardContent>
           </Card>
 
-          <div className="flex gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] p-4 text-sm">
-            <Info className="h-4 w-4 flex-shrink-0 mt-0.5 text-[var(--color-muted-foreground)]" />
-            <div className="text-[var(--color-muted-foreground)]">
-              Reports are immutable for operators. If this report needs a
-              correction, request an edit from an administrator.
+          {!isOwner && (
+            <div className="flex gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] p-4 text-sm">
+              <Info className="h-4 w-4 flex-shrink-0 mt-0.5 text-[var(--color-muted-foreground)]" />
+              <div className="text-[var(--color-muted-foreground)]">
+                This report was filed by another operator. Only the creator or
+                an administrator can make changes.
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

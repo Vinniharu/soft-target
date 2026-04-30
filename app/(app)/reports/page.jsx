@@ -15,6 +15,7 @@ import { PageSpinner } from "@/components/ui/Spinner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ReportTable } from "@/components/reports/ReportTable";
 import { listReports } from "@/lib/api/reports";
+import { useAuth } from "@/lib/auth/AuthContext";
 import { useToast } from "@/lib/toast/ToastContext";
 import { formatApiError } from "@/lib/utils/format";
 
@@ -22,6 +23,7 @@ const PAGE_SIZE = 25;
 
 export default function ReportsPage() {
   const toast = useToast();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
@@ -85,7 +87,7 @@ export default function ReportsPage() {
         </Card>
       ) : (
         <>
-          <ReportTable items={items} />
+          <ReportTable items={items} currentUserId={user?.id} />
           <div className="mt-4 flex items-center justify-between text-sm text-[var(--color-muted-foreground)]">
             <div>
               Page {pageNum} of {pageCount} · {total} total
