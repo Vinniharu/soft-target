@@ -23,6 +23,7 @@ export function AdminReportTable({ items, onDelete }) {
           <TH>Case</TH>
           <TH className="hidden md:table-cell">Version</TH>
           <TH className="hidden md:table-cell">Creator</TH>
+          <TH className="hidden lg:table-cell">Organisation</TH>
           <TH className="hidden lg:table-cell">Created</TH>
           <TH>Updated</TH>
           <TH className="text-right">Actions</TH>
@@ -61,6 +62,9 @@ export function AdminReportTable({ items, onDelete }) {
                   {r.creator.email}
                 </div>
               )}
+            </TD>
+            <TD className="hidden lg:table-cell text-[var(--color-muted-foreground)] truncate max-w-[160px]">
+              {r.creator?.organisation?.name || "—"}
             </TD>
             <TD className="hidden lg:table-cell text-[var(--color-muted-foreground)]">
               {formatDate(r.created_at)}

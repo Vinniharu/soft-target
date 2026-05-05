@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { PageSpinner } from "@/components/ui/Spinner";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { homeForRole } from "@/lib/auth/roles";
 
 export default function RootPage() {
   const router = useRouter();
@@ -15,7 +16,7 @@ export default function RootPage() {
       router.replace("/login");
       return;
     }
-    router.replace(user?.role === "admin" ? "/dashboard" : "/reports");
+    router.replace(homeForRole(user?.role));
   }, [hydrated, isAuthenticated, user, router]);
 
   return (

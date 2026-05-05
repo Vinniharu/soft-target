@@ -16,6 +16,7 @@ import {
 } from "./tokenStorage";
 import { login as apiLogin } from "../api/auth";
 import { getMe } from "../api/me";
+import { ROLES } from "./roles";
 
 const AuthContext = createContext(null);
 
@@ -99,6 +100,7 @@ export function AuthProvider({ children }) {
         email,
         name: null,
         role: result.role || "user",
+        organisation: null,
       });
     }
     return result; // login form reads `role` for routing
@@ -111,19 +113,23 @@ export function AuthProvider({ children }) {
     router.replace("/login");
   }, [router]);
 
-  const value = useMemo(
-    () => ({
+  const value = useMemo(() => {
+    const role = user?.role ?? null;
+    return {
       tokens,
       user,
       hydrated,
       isAuthenticated: !!tokens,
-      isAdmin: user?.role === "admin",
+      role,
+      isAdmin: role === ROLES.ADMIN,
+      isOrgOwner: role === ROLES.ORG_OWNER,
+      isUser: role === ROLES.USER,
+      organisation: user?.organisation ?? null,
       login,
       logout,
       refreshProfile,
-    }),
-    [tokens, user, hydrated, login, logout, refreshProfile],
-  );
+    };
+  }, [tokens, user, hydrated, login, logout, refreshProfile]);
 
   return (
     <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

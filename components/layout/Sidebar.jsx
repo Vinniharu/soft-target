@@ -11,6 +11,9 @@ import {
   FolderCog,
   Plus,
   Shield,
+  Building2,
+  Briefcase,
+  NotebookPen,
   X,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -53,15 +56,20 @@ function NavSection({ label, icon: Icon, children }) {
 
 export function Sidebar({ open = false, onNavigate }) {
   const pathname = usePathname() || "";
-  const { isAdmin } = useAuth();
+  const { isAdmin, isOrgOwner, organisation } = useAuth();
 
   const isActive = (href) => {
     if (href === "/dashboard") return pathname === "/dashboard";
     if (href === "/reports") {
       return (
         pathname === "/reports" ||
-        (pathname.startsWith("/reports/") && !pathname.startsWith("/admin"))
+        (pathname.startsWith("/reports/") &&
+          !pathname.startsWith("/reports/drafts") &&
+          !pathname.startsWith("/admin"))
       );
+    }
+    if (href === "/reports/drafts") {
+      return pathname.startsWith("/reports/drafts");
     }
     return pathname === href || pathname.startsWith(href + "/");
   };
@@ -104,7 +112,7 @@ export function Sidebar({ open = false, onNavigate }) {
                 Soft Target
               </span>
               <span className="text-[11px] text-[var(--color-muted-foreground)] truncate">
-                Operations console
+                {organisation?.name || "Operations console"}
               </span>
             </div>
           </Link>
@@ -147,14 +155,47 @@ export function Sidebar({ open = false, onNavigate }) {
               active={isActive("/reports")}
               onClick={onNavigate}
             />
+            <NavItem
+              href="/reports/drafts"
+              icon={NotebookPen}
+              label="Drafts"
+              active={isActive("/reports/drafts")}
+              onClick={onNavigate}
+            />
           </NavSection>
+
+          {isOrgOwner && (
+            <NavSection label="Organisation" icon={Briefcase}>
+              <NavItem
+                href="/org/reports"
+                icon={FolderCog}
+                label="Org reports"
+                active={isActive("/org/reports")}
+                onClick={onNavigate}
+              />
+              <NavItem
+                href="/org/users"
+                icon={Users}
+                label="Members"
+                active={isActive("/org/users")}
+                onClick={onNavigate}
+              />
+            </NavSection>
+          )}
 
           {isAdmin && (
             <NavSection label="Administration" icon={Shield}>
               <NavItem
+                href="/admin/organisations"
+                icon={Building2}
+                label="Organisations"
+                active={isActive("/admin/organisations")}
+                onClick={onNavigate}
+              />
+              <NavItem
                 href="/admin/reports"
                 icon={FolderCog}
-                label="Manage reports"
+                label="All reports"
                 active={isActive("/admin/reports")}
                 onClick={onNavigate}
               />

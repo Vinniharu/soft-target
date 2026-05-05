@@ -2,15 +2,27 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, Eye, Edit3, MoreHorizontal } from "lucide-react";
+import { FileText, Eye, Edit3, Trash2, MoreHorizontal } from "lucide-react";
 import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/Table";
 import { Badge } from "@/components/ui/Badge";
 import { Menu, MenuItem } from "@/components/ui/Menu";
-import { formatDate, formatRelative } from "@/lib/utils/format";
+import { ConfirmDialog } from "@/components/ui/Dialog";
+import { canEditReport, canDeleteReport } from "@/lib/auth/roles";
+import { deleteReport } from "@/lib/api/reports";
+import { useToast } from "@/lib/toast/ToastContext";
+import { formatApiError, formatDate, formatRelative } from "@/lib/utils/format";
 
-export function ReportTable({ items, currentUserId }) {
+export function ReportTable({
+  items,
+  currentUser,
+  showCreator = false,
+  onChange,
+}) {
   const router = useRouter();
+  const toast = useToast();
   const [menu, setMenu] = useState({ open: false, anchorRect: null, report: null });
+  const [confirmDelete, setConfirmDelete] = useState({ open: false, report: null });
+  const [deleting, setDeleting] = useState(false);
 
   const openMenuForRow = (event, report) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -29,8 +41,32 @@ export function ReportTable({ items, currentUserId }) {
     closeMenu();
   };
 
-  const canEdit = (report) =>
-    !!currentUserId && !!report?.user_id && report.user_id === currentUserId;
+  const handleDeleteClick = () => {
+    if (menu.report) setConfirmDelete({ open: true, report: menu.report });
+    closeMenu();
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete.report) return;
+    setDeleting(true);
+    try {
+      await deleteReport(confirmDelete.report.id);
+      toast.success("Report deleted", confirmDelete.report.case_id);
+      setConfirmDelete({ open: false, report: null });
+      onChange?.();
+    } catch (err) {
+      if (err?.status === 403) {
+        toast.error(
+          "Not allowed",
+          "Only your organisation owner can delete reports.",
+        );
+      } else {
+        toast.error("Delete failed", formatApiError(err));
+      }
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <>
@@ -38,6 +74,7 @@ export function ReportTable({ items, currentUserId }) {
         <THead>
           <tr>
             <TH>Case</TH>
+            {showCreator && <TH className="hidden md:table-cell">Creator</TH>}
             <TH className="hidden md:table-cell">Version</TH>
             <TH className="hidden md:table-cell">Created</TH>
             <TH>Updated</TH>
@@ -70,6 +107,13 @@ export function ReportTable({ items, currentUserId }) {
                   </span>
                 </div>
               </TD>
+              {showCreator && (
+                <TD className="hidden md:table-cell text-[var(--color-muted-foreground)]">
+                  {r.creator?.name ||
+                    r.creator?.email ||
+                    (r.user_id ? r.user_id.slice(0, 8) : "—")}
+                </TD>
+              )}
               <TD className="hidden md:table-cell">
                 <Badge variant="secondary">v{r.version}</Badge>
               </TD>
@@ -96,12 +140,30 @@ export function ReportTable({ items, currentUserId }) {
         <MenuItem icon={Eye} onClick={handleView}>
           View report
         </MenuItem>
-        {canEdit(menu.report) && (
+        {canEditReport(currentUser, menu.report) && (
           <MenuItem icon={Edit3} onClick={handleEdit}>
             Edit report
           </MenuItem>
         )}
+        {canDeleteReport(currentUser, menu.report) && (
+          <MenuItem icon={Trash2} onClick={handleDeleteClick} danger>
+            Delete report
+          </MenuItem>
+        )}
       </Menu>
+
+      <ConfirmDialog
+        open={confirmDelete.open}
+        onOpenChange={(open) =>
+          setConfirmDelete((s) => ({ ...s, open }))
+        }
+        title={`Delete ${confirmDelete.report?.case_id || "report"}?`}
+        description="This soft-deletes the report. The PDF on disk is preserved. This action can be reversed by the backend admin if needed."
+        confirmLabel="Delete report"
+        destructive
+        loading={deleting}
+        onConfirm={handleConfirmDelete}
+      />
     </>
   );
 }

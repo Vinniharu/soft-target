@@ -7,12 +7,9 @@ import { ArrowRight, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { homeForRole } from "@/lib/auth/roles";
 import { useToast } from "@/lib/toast/ToastContext";
 import { formatApiError } from "@/lib/utils/format";
-
-function destinationFor(role) {
-  return role === "admin" ? "/dashboard" : "/reports";
-}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,7 +25,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (hydrated && isAuthenticated) {
-      router.replace(destinationFor(user?.role));
+      router.replace(homeForRole(user?.role));
     }
   }, [hydrated, isAuthenticated, user, router]);
 
@@ -36,7 +33,7 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       const result = await login(email, password);
-      router.replace(destinationFor(result?.role));
+      router.replace(homeForRole(result?.role));
     } catch (err) {
       if (err?.status === 429) {
         toast.error(

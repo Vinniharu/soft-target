@@ -32,6 +32,8 @@ export function ReportForm({
   autoSaveStatus,
   onDiscardDraft,
   draftRestoredAt,
+  title,
+  onTitleChange,
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -102,6 +104,23 @@ export function ReportForm({
         >
           <ArrowLeft className="h-4 w-4" /> Back
         </Button>
+      )}
+
+      {onTitleChange && (
+        <div className="-mt-2">
+          <input
+            type="text"
+            value={title || ""}
+            onChange={(e) => onTitleChange(e.target.value)}
+            placeholder="Untitled draft"
+            maxLength={200}
+            aria-label="Draft title"
+            className="w-full bg-transparent text-2xl font-semibold tracking-tight text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] outline-none border-b border-transparent focus:border-[var(--color-border)] py-1"
+          />
+          <p className="mt-1 text-xs text-[var(--color-muted-foreground)]">
+            Give this draft a name so you can find it later.
+          </p>
+        </div>
       )}
 
       {draftRestoredAt && (

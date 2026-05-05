@@ -25,6 +25,7 @@ export function UserTable({ items }) {
         <tr>
           <TH>Name</TH>
           <TH>Role</TH>
+          <TH className="hidden lg:table-cell">Organisation</TH>
           <TH className="hidden md:table-cell">Created</TH>
           <TH className="w-12 text-right" aria-label="Open" />
         </tr>
@@ -59,6 +60,9 @@ export function UserTable({ items }) {
                 {u.role === "admin" && <Shield className="h-3 w-3" />}
                 {u.role}
               </Badge>
+            </TD>
+            <TD className="hidden lg:table-cell text-[var(--color-muted-foreground)] truncate max-w-[160px]">
+              {u.organisation?.name || "—"}
             </TD>
             <TD className="hidden md:table-cell text-[var(--color-muted-foreground)]">
               {formatDate(u.created_at)}

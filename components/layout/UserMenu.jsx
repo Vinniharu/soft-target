@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { LogOut, ChevronUp, Shield } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { roleLabel } from "@/lib/auth/roles";
 
 export function UserMenu() {
   const { user, logout } = useAuth();
@@ -46,7 +47,8 @@ export function UserMenu() {
             {name}
           </div>
           <div className="text-[11px] text-[var(--color-muted-foreground)] truncate">
-            {role === "admin" ? "Administrator" : "Operator"}
+            {roleLabel(role)}
+            {user.organisation?.name ? ` · ${user.organisation.name}` : ""}
           </div>
         </div>
         <ChevronUp

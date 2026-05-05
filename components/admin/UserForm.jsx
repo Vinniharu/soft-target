@@ -13,6 +13,8 @@ export function UserForm({
   mode = "create",
   onSubmit,
   submitLabel,
+  showRole = true,
+  roleOptions,
 }) {
   const toast = useToast();
   const [submitting, setSubmitting] = useState(false);
@@ -28,7 +30,9 @@ export function UserForm({
   const handleFormSubmit = async (form) => {
     setSubmitting(true);
     try {
-      await onSubmit(form);
+      const payload = { ...form };
+      if (!showRole) delete payload.role;
+      await onSubmit(payload);
     } catch (err) {
       toast.error(
         mode === "edit" ? "Update failed" : "Creation failed",
@@ -38,6 +42,11 @@ export function UserForm({
       setSubmitting(false);
     }
   };
+
+  const options = roleOptions || [
+    { value: "user", label: "Operator (user)" },
+    { value: "admin", label: "Administrator (admin)" },
+  ];
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
@@ -75,14 +84,19 @@ export function UserForm({
         })}
         error={errors.password?.message}
       />
-      <Select
-        label="Role"
-        {...register("role", { required: "Role is required" })}
-        error={errors.role?.message}
-      >
-        <option value="user">Operator (user)</option>
-        <option value="admin">Administrator (admin)</option>
-      </Select>
+      {showRole && (
+        <Select
+          label="Role"
+          {...register("role", { required: showRole ? "Role is required" : false })}
+          error={errors.role?.message}
+        >
+          {options.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </Select>
+      )}
 
       <div className="pt-2">
         <Button

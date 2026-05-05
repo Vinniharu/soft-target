@@ -10,18 +10,20 @@ import {
   Plus,
   ScrollText,
   Users,
+  Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { listReports } from "@/lib/api/reports";
 import { formatRelative, formatApiError } from "@/lib/utils/format";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { roleLabel } from "@/lib/auth/roles";
 import { useToast } from "@/lib/toast/ToastContext";
 
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 export default function DashboardPage() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isOrgOwner, organisation } = useAuth();
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [recent, setRecent] = useState([]);
@@ -107,12 +109,19 @@ export default function DashboardPage() {
         <SectionLabel>Overview</SectionLabel>
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-x-10 gap-y-8">
           <Metric
-            label={isAdmin ? "Reports system-wide" : "Your reports"}
+            label={
+              isAdmin
+                ? "Reports system-wide"
+                : isOrgOwner
+                  ? "Organisation reports"
+                  : "Your reports"
+            }
             value={loading ? "—" : total.toString()}
           />
           <Metric
             label="Role"
-            value={isAdmin ? "Administrator" : "Operator"}
+            value={roleLabel(user?.role)}
+            sub={organisation?.name}
           />
           <Metric label="Session" value="Active" indicator />
         </div>
@@ -185,15 +194,42 @@ export default function DashboardPage() {
         )}
       </section>
 
+      {/* Org owner — subtle */}
+      {isOrgOwner && (
+        <section className="border-t border-[var(--color-border)] py-10 md:py-12">
+          <SectionLabel>Organisation</SectionLabel>
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <AdminLink
+              href="/org/reports"
+              icon={FolderCog}
+              title="Org reports"
+              description="Every report filed by your members"
+            />
+            <AdminLink
+              href="/org/users"
+              icon={Users}
+              title="Members"
+              description="Add or edit operators in your org"
+            />
+          </div>
+        </section>
+      )}
+
       {/* Admin — subtle */}
       {isAdmin && (
         <section className="border-t border-[var(--color-border)] py-10 md:py-12">
           <SectionLabel>Administration</SectionLabel>
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <AdminLink
+              href="/admin/organisations"
+              icon={Building2}
+              title="Organisations"
+              description="Provision and manage tenants"
+            />
             <AdminLink
               href="/admin/reports"
               icon={FolderCog}
-              title="Manage reports"
+              title="All reports"
               description="Edit or remove any record"
             />
             <AdminLink
@@ -223,7 +259,7 @@ function SectionLabel({ children }) {
   );
 }
 
-function Metric({ label, value, indicator }) {
+function Metric({ label, value, indicator, sub }) {
   return (
     <div>
       <div className="text-3xl md:text-4xl font-semibold tracking-tight text-[var(--color-foreground)] tabular-nums">
@@ -239,6 +275,7 @@ function Metric({ label, value, indicator }) {
       </div>
       <div className="mt-2 text-sm text-[var(--color-muted-foreground)]">
         {label}
+        {sub ? <span className="block text-xs">{sub}</span> : null}
       </div>
     </div>
   );

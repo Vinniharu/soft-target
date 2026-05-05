@@ -14,6 +14,7 @@ import { getReport, updateMyReport } from "@/lib/api/reports";
 import { apiToForm } from "@/lib/utils/mapReport";
 import { formatApiError } from "@/lib/utils/format";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { canEditReport } from "@/lib/auth/roles";
 import { useToast } from "@/lib/toast/ToastContext";
 
 export default function EditReportPage() {
@@ -53,7 +54,10 @@ export default function EditReportPage() {
       router.push(`/reports/${updated.id}`);
     } catch (err) {
       if (err?.status === 403) {
-        toast.error("Not allowed", "You can only edit your own reports.");
+        toast.error(
+          "Not allowed",
+          "You don't have permission to edit this report.",
+        );
         router.push(`/reports/${reportId}`);
         return;
       }
@@ -76,9 +80,7 @@ export default function EditReportPage() {
     );
   }
 
-  const isOwner = !!user?.id && report.user_id === user.id;
-
-  if (!isOwner) {
+  if (!canEditReport(user, report)) {
     return (
       <div>
         <PageHeader title="Edit report" />
@@ -86,7 +88,7 @@ export default function EditReportPage() {
           <EmptyState
             icon={Lock}
             title="Access restricted"
-            description="You can only edit reports you created. Ask an administrator if you need this report changed."
+            description="You don't have permission to edit this report. Ask the creator, your organisation owner, or an administrator if you need this report changed."
             action={
               <Link href={`/reports/${reportId}`}>
                 <Button variant="outline">View report</Button>
