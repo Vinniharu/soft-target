@@ -137,11 +137,11 @@ export function ReportPreviewPanel({
         <div className="p-3 md:p-6 flex justify-center">
           <div
             className="
-              flex-shrink-0 overflow-hidden shadow-2xl
-              w-[286px] h-[404px]
-              sm:w-[437px] sm:h-[618px]
-              md:w-[556px] md:h-[786px]
-              lg:w-[675px] lg:h-[955px]
+              flex-shrink-0 shadow-2xl
+              w-[286px] min-h-[404px]
+              sm:w-[437px] sm:min-h-[618px]
+              md:w-[556px] md:min-h-[786px]
+              lg:w-[675px] lg:min-h-[955px]
             "
           >
             <div

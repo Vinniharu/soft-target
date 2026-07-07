@@ -3,6 +3,18 @@ import React, { forwardRef } from "react";
 const DocumentTemplate = forwardRef(({ data }, ref) => {
   if (!data) return null;
 
+  const summaryText =
+    data.summary ||
+    data.generalNote ||
+    data.general_note ||
+    data.general_notes ||
+    data.notes ||
+    (typeof data.general === "string" ? data.general : null);
+
+  const hasSoftTargetNotes = data.softTargets?.some(
+    (t) => t?.notes && String(t.notes).trim() !== ""
+  );
+
   return (
     <div
       ref={ref}
@@ -75,7 +87,7 @@ const DocumentTemplate = forwardRef(({ data }, ref) => {
                 {data.target?.location || "N/A"}
               </td>
             </tr>
-            <tr>
+            <tr className={data.target?.notes && String(data.target.notes).trim() !== "" ? "border-b border-gray-100" : ""}>
               <td className="py-2.5 font-bold text-gray-500 uppercase text-xs tracking-wider">
                 Coordinates
               </td>
@@ -83,12 +95,25 @@ const DocumentTemplate = forwardRef(({ data }, ref) => {
                 {data.target?.coordinates || "N/A"}
               </td>
             </tr>
+            {data.target?.notes && String(data.target.notes).trim() !== "" && (
+              <tr>
+                <td className="py-2.5 font-bold text-gray-500 uppercase text-xs tracking-wider align-top">
+                  Notes
+                </td>
+                <td
+                  className="py-2.5 font-sans text-black whitespace-pre-wrap"
+                  colSpan="3"
+                >
+                  {data.target.notes}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
       {/* Soft Target List */}
-      <div>
+      <div className="mb-8">
         <h2 className="text-xl font-bold uppercase text-red-600 border-b-2 border-gray-100 mb-4 pb-1 flex items-center gap-2">
           <span className="w-2 h-2 bg-red-600"></span> Soft Target Analysis
         </h2>
@@ -104,6 +129,9 @@ const DocumentTemplate = forwardRef(({ data }, ref) => {
                 </th>
                 <th className="px-4 py-3 border-r border-gray-200">Location</th>
                 <th className="px-4 py-3 text-right">Coordinates</th>
+                {hasSoftTargetNotes && (
+                  <th className="px-4 py-3 border-l border-gray-200">Notes</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -126,12 +154,17 @@ const DocumentTemplate = forwardRef(({ data }, ref) => {
                       ? `${target.lat}, ${target.lng}`
                       : target.lat || target.lng || "-"}
                   </td>
+                  {hasSoftTargetNotes && (
+                    <td className="px-4 py-2.5 border-l border-gray-100 font-sans text-xs text-gray-700 whitespace-pre-wrap">
+                      {target.notes || "-"}
+                    </td>
+                  )}
                 </tr>
               ))}
               {(!data.softTargets || data.softTargets.length === 0) && (
                 <tr>
                   <td
-                    colSpan="4"
+                    colSpan={hasSoftTargetNotes ? "5" : "4"}
                     className="px-4 py-12 text-center text-gray-400 italic bg-gray-50"
                   >
                     No data available.
@@ -143,10 +176,22 @@ const DocumentTemplate = forwardRef(({ data }, ref) => {
         </div>
       </div>
 
+      {/* Summary */}
+      {summaryText && String(summaryText).trim() !== "" && (
+        <div className="mb-12">
+          <h2 className="text-xl font-bold uppercase text-red-600 border-b-2 border-gray-100 mb-4 pb-1 flex items-center gap-2">
+            <span className="w-2 h-2 bg-red-600"></span> Summary
+          </h2>
+          <div className="bg-gray-50 border border-gray-200 p-4 text-sm font-sans text-gray-800 whitespace-pre-wrap leading-relaxed">
+            {summaryText}
+          </div>
+        </div>
+      )}
+
       {/* Footer */}
-      <div className="absolute bottom-12 left-12 right-12 border-t-2 border-red-600 pt-4 flex justify-between text-[10px] uppercase font-bold tracking-widest text-red-600/50">
+      <div className="mt-16 border-t-2 border-red-600 pt-4 flex justify-between text-[10px] uppercase font-bold tracking-widest text-red-600/50">
         <div>Soft Target v1.0 // Generated Report</div>
-        <div>Page 1 of 1</div>
+        <div>Confidential // Official Report</div>
       </div>
     </div>
   );
