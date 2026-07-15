@@ -23,6 +23,7 @@ Admins additionally manage user accounts and review a system-wide audit log.
 ## Features
 
 ### For all authenticated users
+
 - Dashboard with stats and recent reports
 - Create new investigation reports (case ID, primary target, soft targets, summary)
 - View reports with the embedded A4 `DocumentTemplate` preview
@@ -31,6 +32,7 @@ Admins additionally manage user accounts and review a system-wide audit log.
 - Paginated report list
 
 ### For administrators
+
 - Edit reports (creates a new version, prior state retained server-side)
 - Soft-delete reports
 - User management — create, edit, soft-delete operator accounts
@@ -54,18 +56,18 @@ http://localhost:3245
 
 ### Environment variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `NEXT_PUBLIC_API_BASE_URL` | `http://41.242.54.70:4382` | Backend base URL (no trailing slash, no `/api/v1` suffix) |
+| Variable                   | Default                     | Description                                               |
+| -------------------------- | --------------------------- | --------------------------------------------------------- |
+| `NEXT_PUBLIC_API_BASE_URL` | `http://41.242.60.230:4382` | Backend base URL (no trailing slash, no `/api/v1` suffix) |
 
 If unset, the app falls back to the VPS URL so it works out of the box.
 
 ### Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start Next.js dev server on port 3245 |
-| `npm run build` | Build the production bundle |
+| Script          | Description                              |
+| --------------- | ---------------------------------------- |
+| `npm run dev`   | Start Next.js dev server on port 3245    |
+| `npm run build` | Build the production bundle              |
 | `npm run start` | Start the production server on port 3245 |
 
 ---
@@ -193,13 +195,13 @@ The form uses a convenient flat shape (`caseId`, `target.imei`, `target.imei2`, 
 
 All color, typography, and spacing tokens live in `app/globals.css` inside a Tailwind v4 `@theme` block. Never hardcode hex colors in components — use the CSS variables:
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--color-primary` | `#dc2626` | Primary red (Red-600) |
-| `--color-primary-foreground` | `#ffffff` | Text on primary |
-| `--color-secondary` | `#f3f4f6` | Light gray backgrounds |
-| `--color-border` | `#e5e7eb` | All borders |
-| `--color-muted-foreground` | `#6b7280` | Mono labels, metadata |
+| Token                        | Value     | Usage                  |
+| ---------------------------- | --------- | ---------------------- |
+| `--color-primary`            | `#dc2626` | Primary red (Red-600)  |
+| `--color-primary-foreground` | `#ffffff` | Text on primary        |
+| `--color-secondary`          | `#f3f4f6` | Light gray backgrounds |
+| `--color-border`             | `#e5e7eb` | All borders            |
+| `--color-muted-foreground`   | `#6b7280` | Mono labels, metadata  |
 
 Typography is **Geist Sans** (body) and **Geist Mono** (labels, code, metadata). Heavy weights dominate: `font-black` for page titles, `font-bold uppercase tracking-widest` for section headers, `font-mono` for anything operator-facing.
 
@@ -217,4 +219,4 @@ Typography is **Geist Sans** (body) and **Geist Mono** (labels, code, metadata).
 ## Reference
 
 - `API.md` — backend API reference (developer-only, not rendered in-app)
-- Backend default: `http://41.242.54.70:4382` — override with `NEXT_PUBLIC_API_BASE_URL`
+- Backend default: `http://41.242.60.230:4382` — override with `NEXT_PUBLIC_API_BASE_URL`

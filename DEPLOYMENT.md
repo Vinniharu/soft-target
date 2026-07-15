@@ -35,6 +35,7 @@ sudo -iu softtarget
 Pick one:
 
 **A. From a Git remote** (preferred — push your repo to GitHub/GitLab first):
+
 ```bash
 cd ~
 git clone https://github.com/<you>/soft-target.git
@@ -42,22 +43,24 @@ cd soft-target
 ```
 
 **B. From your dev machine via `scp`** (no Git needed):
+
 ```powershell
 # from Windows PowerShell, in C:\Users\fagbe\Documents
 scp -r soft-target softtarget@41.242.54.70:~/
 ```
+
 Then on the VPS: `cd ~/soft-target`.
 
 ---
 
 ## 3. Configure the API base URL (CRITICAL)
 
-`NEXT_PUBLIC_API_BASE_URL` is **baked into the bundle at build time**. If you build without it, the browser will fall back to `http://41.242.54.70:4382` (the literal in `lib/api/config.js`). To override, create `.env.production` (or `.env.local`) **before** building:
+`NEXT_PUBLIC_API_BASE_URL` is **baked into the bundle at build time**. If you build without it, the browser will fall back to `http://41.242.60.230:4382` (the literal in `lib/api/config.js`). To override, create `.env.production` (or `.env.local`) **before** building:
 
 ```bash
 cd ~/soft-target
 cat > .env.production <<EOF
-NEXT_PUBLIC_API_BASE_URL=http://41.242.54.70:4382
+NEXT_PUBLIC_API_BASE_URL=http://41.242.60.230:4382
 EOF
 ```
 
@@ -74,6 +77,7 @@ npm run build   # produces .next/ — must run AFTER editing .env.production
 ```
 
 Smoke test it once before installing the service:
+
 ```bash
 npm run start   # listens on :3245
 # → in a second terminal: curl -I http://localhost:3245/login
@@ -108,6 +112,7 @@ WantedBy=multi-user.target
 ```
 
 Enable and start:
+
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable --now soft-target-web
@@ -156,6 +161,7 @@ server {
 ```
 
 Enable + reload:
+
 ```bash
 sudo ln -s /etc/nginx/sites-available/soft-target /etc/nginx/sites-enabled/
 sudo nginx -t
@@ -165,6 +171,7 @@ sudo systemctl reload nginx
 If port 80 was previously in use by the backend, move the backend to a different listen port or path-prefix it (`/api`) before doing this.
 
 Open the firewall:
+
 ```bash
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp   # only if you set up TLS
@@ -184,6 +191,7 @@ sudo certbot --nginx -d app.example.com
 Certbot rewrites the nginx config and sets up auto-renewal.
 
 After TLS is on, **rebuild the frontend** with the HTTPS URL in `.env.production` so JWT/refresh calls don't get blocked as mixed content:
+
 ```bash
 echo 'NEXT_PUBLIC_API_BASE_URL=https://app.example.com' > ~/soft-target/.env.production
 cd ~/soft-target && npm run build && sudo systemctl restart soft-target-web
@@ -193,7 +201,7 @@ cd ~/soft-target && npm run build && sudo systemctl restart soft-target-web
 
 ## 8. Backend CORS
 
-If frontend and backend live on **different origins** (e.g., frontend at `http://app.example.com`, backend at `http://41.242.54.70:4382`), the backend's `Access-Control-Allow-Origin` must include the frontend origin. Update the backend's CORS config and restart it.
+If frontend and backend live on **different origins** (e.g., frontend at `http://app.example.com`, backend at `http://41.242.60.230:4382`), the backend's `Access-Control-Allow-Origin` must include the frontend origin. Update the backend's CORS config and restart it.
 
 If you proxy `/api/` through the same nginx (the commented block above), this isn't needed — same origin.
 
@@ -217,14 +225,14 @@ Zero-downtime is not built in — Next.js is single-process. For most internal t
 
 ## 10. Troubleshooting
 
-| Symptom | Likely cause | Fix |
-|---|---|---|
-| `502 Bad Gateway` from nginx | Service down or wrong port | `systemctl status soft-target-web`; check `ExecStart` port matches `proxy_pass` port |
-| Browser shows old API URL after edit | `.env.production` was changed but app wasn't rebuilt | `npm run build && systemctl restart soft-target-web` |
-| `CORS` errors in console | Frontend and backend on different origins, backend doesn't allow this origin | Add the frontend origin to backend CORS, or proxy `/api/` through the same nginx |
-| Mixed-content errors after enabling HTTPS | Frontend served over HTTPS, API URL still `http://...` | Rebuild with `NEXT_PUBLIC_API_BASE_URL=https://...` |
-| `EADDRINUSE :::3245` on start | Port already used (the dev server, an old instance, etc.) | `sudo lsof -i :3245` then kill, or change the port in `package.json` + service unit |
-| `permission denied` reading `.next/` | Built as a different user than the service user | Re-run `npm ci && npm run build` while logged in as `softtarget` |
+| Symptom                                   | Likely cause                                                                 | Fix                                                                                  |
+| ----------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `502 Bad Gateway` from nginx              | Service down or wrong port                                                   | `systemctl status soft-target-web`; check `ExecStart` port matches `proxy_pass` port |
+| Browser shows old API URL after edit      | `.env.production` was changed but app wasn't rebuilt                         | `npm run build && systemctl restart soft-target-web`                                 |
+| `CORS` errors in console                  | Frontend and backend on different origins, backend doesn't allow this origin | Add the frontend origin to backend CORS, or proxy `/api/` through the same nginx     |
+| Mixed-content errors after enabling HTTPS | Frontend served over HTTPS, API URL still `http://...`                       | Rebuild with `NEXT_PUBLIC_API_BASE_URL=https://...`                                  |
+| `EADDRINUSE :::3245` on start             | Port already used (the dev server, an old instance, etc.)                    | `sudo lsof -i :3245` then kill, or change the port in `package.json` + service unit  |
+| `permission denied` reading `.next/`      | Built as a different user than the service user                              | Re-run `npm ci && npm run build` while logged in as `softtarget`                     |
 
 ---
 
