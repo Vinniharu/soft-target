@@ -12,11 +12,25 @@ export function ReportPreviewPanel({
   data,
   caseId,
   version,
+  onDownloadServerPdf,
 }) {
   const reportRef = useRef(null);
   const toast = useToast();
   const [exportingImage, setExportingImage] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [serverPdfLoading, setServerPdfLoading] = useState(false);
+
+  const handleServerPdf = async () => {
+    if (!onDownloadServerPdf) return;
+    setServerPdfLoading(true);
+    try {
+      await onDownloadServerPdf();
+    } catch (err) {
+      toast.error("Server PDF download failed", err.message || "Unknown error");
+    } finally {
+      setServerPdfLoading(false);
+    }
+  };
 
   async function capturePng() {
     // Wait for fonts so the capture renders in Inter, not a fallback
@@ -125,6 +139,15 @@ export function ReportPreviewPanel({
         <Button variant="outline" onClick={handleImage} isLoading={exportingImage}>
           <ImageIcon className="h-4 w-4" /> PNG
         </Button>
+        {onDownloadServerPdf && (
+          <Button
+            variant="outline"
+            onClick={handleServerPdf}
+            isLoading={serverPdfLoading}
+          >
+            <Download className="h-4 w-4" /> Server PDF
+          </Button>
+        )}
         <Button onClick={handlePdf} isLoading={exportingPdf}>
           <Download className="h-4 w-4" /> Download PDF
         </Button>

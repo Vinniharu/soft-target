@@ -11,8 +11,11 @@ import { Badge } from "@/components/ui/Badge";
 import { PageSpinner } from "@/components/ui/Spinner";
 import { ConfirmDialog } from "@/components/ui/Dialog";
 import { ReportPreviewPanel } from "@/components/reports/ReportPreviewPanel";
-import { getReport, downloadReportPdf } from "@/lib/api/reports";
-import { deleteReport } from "@/lib/api/adminReports";
+import {
+  getOrganisationReport,
+  deleteOrganisationReport,
+  downloadOrganisationReportPdf,
+} from "@/lib/api/organisations";
 import { apiToForm } from "@/lib/utils/mapReport";
 import { formatDate, formatApiError } from "@/lib/utils/format";
 import { useToast } from "@/lib/toast/ToastContext";
@@ -24,10 +27,11 @@ function creatorLabel(creator, fallbackUserId) {
   return "Unknown";
 }
 
-export default function AdminReportDetailPage() {
+export default function AdminOrgReportDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const reportId = params?.id;
+  const orgId = params?.id;
+  const reportId = params?.reportId;
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState(null);
@@ -35,12 +39,12 @@ export default function AdminReportDetailPage() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    if (!reportId) return;
+    if (!orgId || !reportId) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
       try {
-        const data = await getReport(reportId);
+        const data = await getOrganisationReport(orgId, reportId);
         if (!cancelled) setReport(data);
       } catch (err) {
         toast.error("Failed to load report", formatApiError(err));
@@ -51,14 +55,14 @@ export default function AdminReportDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [reportId, toast]);
+  }, [orgId, reportId, toast]);
 
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      await deleteReport(reportId);
+      await deleteOrganisationReport(orgId, reportId);
       toast.success("Report deleted", report?.case_id);
-      router.push("/admin/reports");
+      router.push(`/admin/organisations/${orgId}`);
     } catch (err) {
       toast.error("Delete failed", formatApiError(err));
     } finally {
@@ -72,10 +76,10 @@ export default function AdminReportDetailPage() {
     return (
       <div className="text-center py-12">
         <p className="text-sm text-[var(--color-muted-foreground)]">
-          Report not found.
+          Report not found in this organisation.
         </p>
-        <Link href="/admin/reports">
-          <Button className="mt-4">Back to manage reports</Button>
+        <Link href={`/admin/organisations/${orgId}`}>
+          <Button className="mt-4">Back to organisation</Button>
         </Link>
       </div>
     );
@@ -90,19 +94,19 @@ export default function AdminReportDetailPage() {
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => router.push("/admin/reports")}
+        onClick={() => router.push(`/admin/organisations/${orgId}`)}
         className="mb-3 -ml-2"
       >
-        <ArrowLeft className="h-4 w-4" /> Back to manage reports
+        <ArrowLeft className="h-4 w-4" /> Back to organisation details
       </Button>
 
       <PageHeader
-        eyebrow={`Admin view · v${report.version}`}
+        eyebrow={`Organisation report · v${report.version}`}
         title={report.case_id}
         description={`Filed ${formatDate(report.created_at)} · updated ${formatDate(report.updated_at)}`}
         actions={
           <>
-            <Link href={`/admin/reports/${report.id}/edit`}>
+            <Link href={`/admin/organisations/${orgId}/reports/${report.id}/edit`}>
               <Button variant="outline">
                 <Edit3 className="h-4 w-4" /> Edit
               </Button>
@@ -131,7 +135,7 @@ export default function AdminReportDetailPage() {
             caseId={report.case_id}
             version={report.version}
             onDownloadServerPdf={() =>
-              downloadReportPdf(report.id, report.case_id, report.version)
+              downloadOrganisationReportPdf(orgId, report.id, report.case_id, report.version)
             }
           />
         </div>
@@ -162,7 +166,7 @@ export default function AdminReportDetailPage() {
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         title={`Delete ${report.case_id}?`}
-        description="This soft-deletes the report. PDFs on disk are retained but the record is no longer accessible via the API."
+        description="This soft-deletes the report from this organisation."
         confirmLabel="Delete report"
         destructive
         loading={deleting}

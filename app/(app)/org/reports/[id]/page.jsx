@@ -11,24 +11,19 @@ import { Badge } from "@/components/ui/Badge";
 import { PageSpinner } from "@/components/ui/Spinner";
 import { ConfirmDialog } from "@/components/ui/Dialog";
 import { ReportPreviewPanel } from "@/components/reports/ReportPreviewPanel";
-import { getReport, downloadReportPdf } from "@/lib/api/reports";
-import { deleteReport } from "@/lib/api/adminReports";
+import { getOrgReport, deleteOrgReport, downloadOrgReportPdf } from "@/lib/api/org";
 import { apiToForm } from "@/lib/utils/mapReport";
 import { formatDate, formatApiError } from "@/lib/utils/format";
+import { useAuth } from "@/lib/auth/AuthContext";
 import { useToast } from "@/lib/toast/ToastContext";
+import { canEditReport, canDeleteReport } from "@/lib/auth/roles";
 
-function creatorLabel(creator, fallbackUserId) {
-  if (creator?.name) return creator.name;
-  if (creator?.email) return creator.email;
-  if (fallbackUserId) return `${fallbackUserId.slice(0, 8)}…`;
-  return "Unknown";
-}
-
-export default function AdminReportDetailPage() {
+export default function OrgReportDetailPage() {
   const router = useRouter();
   const params = useParams();
   const reportId = params?.id;
   const toast = useToast();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -40,7 +35,7 @@ export default function AdminReportDetailPage() {
     (async () => {
       setLoading(true);
       try {
-        const data = await getReport(reportId);
+        const data = await getOrgReport(reportId);
         if (!cancelled) setReport(data);
       } catch (err) {
         toast.error("Failed to load report", formatApiError(err));
@@ -54,13 +49,21 @@ export default function AdminReportDetailPage() {
   }, [reportId, toast]);
 
   const handleDelete = async () => {
+    if (!report) return;
     setDeleting(true);
     try {
-      await deleteReport(reportId);
-      toast.success("Report deleted", report?.case_id);
-      router.push("/admin/reports");
+      await deleteOrgReport(report.id);
+      toast.success("Report deleted", report.case_id);
+      router.push("/org/reports");
     } catch (err) {
-      toast.error("Delete failed", formatApiError(err));
+      if (err?.status === 403) {
+        toast.error(
+          "Not allowed",
+          "Only your organisation owner can delete reports.",
+        );
+      } else {
+        toast.error("Delete failed", formatApiError(err));
+      }
     } finally {
       setDeleting(false);
       setDeleteOpen(false);
@@ -74,52 +77,64 @@ export default function AdminReportDetailPage() {
         <p className="text-sm text-[var(--color-muted-foreground)]">
           Report not found.
         </p>
-        <Link href="/admin/reports">
-          <Button className="mt-4">Back to manage reports</Button>
+        <Link href="/org/reports">
+          <Button className="mt-4">Back to org reports</Button>
         </Link>
       </div>
     );
   }
 
   const formShape = apiToForm(report);
-  const creatorName = creatorLabel(report.creator, report.user_id);
-  const creatorEmail = report.creator?.email;
+  const isCreator = !!user?.id && report.user_id === user.id;
+  const canEdit = canEditReport(user, report);
+  const canDelete = canDeleteReport(user, report);
+  const creatorName = report.creator?.name || report.creator?.email;
+  const creatorOrg = report.creator?.organisation?.name;
 
   return (
     <div>
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => router.push("/admin/reports")}
+        onClick={() => router.push("/org/reports")}
         className="mb-3 -ml-2"
       >
-        <ArrowLeft className="h-4 w-4" /> Back to manage reports
+        <ArrowLeft className="h-4 w-4" /> Back to org reports
       </Button>
 
       <PageHeader
-        eyebrow={`Admin view · v${report.version}`}
+        eyebrow={`Organisation report · v${report.version}`}
         title={report.case_id}
-        description={`Filed ${formatDate(report.created_at)} · updated ${formatDate(report.updated_at)}`}
+        description={
+          isCreator
+            ? `Filed ${formatDate(report.created_at)} · updated ${formatDate(report.updated_at)}`
+            : `Filed by ${creatorName || "a team member"}${creatorOrg ? ` · ${creatorOrg}` : ""}`
+        }
         actions={
-          <>
-            <Link href={`/admin/reports/${report.id}/edit`}>
-              <Button variant="outline">
-                <Edit3 className="h-4 w-4" /> Edit
+          <div className="flex items-center gap-2">
+            {canEdit && (
+              <Link href={`/org/reports/${report.id}/edit`}>
+                <Button variant="outline">
+                  <Edit3 className="h-4 w-4" /> Edit
+                </Button>
+              </Link>
+            )}
+            {canDelete && (
+              <Button
+                variant="outline"
+                onClick={() => setDeleteOpen(true)}
+                className="text-[var(--color-danger)] border-red-200 hover:bg-[var(--color-danger-subtle)]"
+              >
+                <Trash2 className="h-4 w-4" /> Delete
               </Button>
-            </Link>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteOpen(true)}
-              className="text-[var(--color-danger)] border-red-200 hover:bg-[var(--color-danger-subtle)]"
-            >
-              <Trash2 className="h-4 w-4" /> Delete
-            </Button>
-          </>
+            )}
+          </div>
         }
       >
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="secondary">Version {report.version}</Badge>
-          <Badge variant="outline">By {creatorName}</Badge>
+          <Badge variant="outline">ID {report.id.slice(0, 8)}</Badge>
+          {!canEdit && <Badge>Read only</Badge>}
         </div>
       </PageHeader>
 
@@ -131,11 +146,11 @@ export default function AdminReportDetailPage() {
             caseId={report.case_id}
             version={report.version}
             onDownloadServerPdf={() =>
-              downloadReportPdf(report.id, report.case_id, report.version)
+              downloadOrgReportPdf(report.id, report.case_id, report.version)
             }
           />
         </div>
-        <div>
+        <div className="space-y-4">
           <Card>
             <div className="px-5 py-4 border-b border-[var(--color-border)]">
               <h3 className="text-sm font-semibold text-[var(--color-foreground)]">
@@ -145,12 +160,14 @@ export default function AdminReportDetailPage() {
             <CardContent className="p-5 space-y-3 text-sm">
               <MetaRow label="Case ID" value={report.case_id} />
               <MetaRow label="Version" value={`v${report.version}`} />
-              <MetaRow label="Created by" value={creatorName} />
-              {creatorEmail && creatorEmail !== creatorName && (
-                <MetaRow label="Email" value={creatorEmail} />
+              <MetaRow
+                label="Created by"
+                value={creatorName || (isCreator ? "You" : "—")}
+              />
+              {creatorOrg && (
+                <MetaRow label="Organisation" value={creatorOrg} />
               )}
-              <MetaRow label="Report ID" value={report.id} mono />
-              <MetaRow label="Owner ID" value={report.user_id} mono />
+              <MetaRow label="Report ID" value={report.id} mono truncate />
               <MetaRow label="Created" value={formatDate(report.created_at)} />
               <MetaRow label="Updated" value={formatDate(report.updated_at)} />
             </CardContent>
@@ -162,7 +179,7 @@ export default function AdminReportDetailPage() {
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         title={`Delete ${report.case_id}?`}
-        description="This soft-deletes the report. PDFs on disk are retained but the record is no longer accessible via the API."
+        description="This soft-deletes the report. The PDF on disk is preserved. This action can be reversed by the backend admin if needed."
         confirmLabel="Delete report"
         destructive
         loading={deleting}
@@ -172,14 +189,15 @@ export default function AdminReportDetailPage() {
   );
 }
 
-function MetaRow({ label, value, mono }) {
+function MetaRow({ label, value, mono, truncate }) {
   return (
     <div className="flex items-center justify-between gap-3">
       <span className="text-[var(--color-muted-foreground)] flex-shrink-0">
         {label}
       </span>
       <span
-        className={`text-right break-all ${mono ? "font-mono text-xs" : "font-medium"} text-[var(--color-foreground)]`}
+        className={`text-[var(--color-foreground)] ${mono ? "font-mono text-xs" : "font-medium"} ${truncate ? "truncate" : ""}`}
+        title={truncate ? value : undefined}
       >
         {value}
       </span>

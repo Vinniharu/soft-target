@@ -16,6 +16,8 @@ export function ReportTable({
   items,
   currentUser,
   showCreator = false,
+  basePath = "/reports",
+  onDelete,
   onChange,
 }) {
   const router = useRouter();
@@ -32,12 +34,12 @@ export function ReportTable({
   const closeMenu = () => setMenu((m) => ({ ...m, open: false }));
 
   const handleView = () => {
-    if (menu.report) router.push(`/reports/${menu.report.id}`);
+    if (menu.report) router.push(`${basePath}/${menu.report.id}`);
     closeMenu();
   };
 
   const handleEdit = () => {
-    if (menu.report) router.push(`/reports/${menu.report.id}/edit`);
+    if (menu.report) router.push(`${basePath}/${menu.report.id}/edit`);
     closeMenu();
   };
 
@@ -50,11 +52,16 @@ export function ReportTable({
     if (!confirmDelete.report) return;
     setDeleting(true);
     try {
-      await deleteReport(confirmDelete.report.id);
+      if (onDelete) {
+        await onDelete(confirmDelete.report.id);
+      } else {
+        await deleteReport(confirmDelete.report.id);
+      }
       toast.success("Report deleted", confirmDelete.report.case_id);
       setConfirmDelete({ open: false, report: null });
       onChange?.();
     } catch (err) {
+
       if (err?.status === 403) {
         toast.error(
           "Not allowed",

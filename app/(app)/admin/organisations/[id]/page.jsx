@@ -225,7 +225,7 @@ export default function AdminOrganisationDetailPage() {
                       </div>
                     </div>
                     <Link
-                      href={`/reports/${r.id}`}
+                      href={`/admin/organisations/${orgId}/reports/${r.id}`}
                       className="text-xs text-[var(--color-primary)] hover:underline flex-shrink-0"
                     >
                       View

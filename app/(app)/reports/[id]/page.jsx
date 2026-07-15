@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { PageSpinner } from "@/components/ui/Spinner";
 import { ConfirmDialog } from "@/components/ui/Dialog";
 import { ReportPreviewPanel } from "@/components/reports/ReportPreviewPanel";
-import { getReport, deleteReport } from "@/lib/api/reports";
+import { getReport, deleteReport, downloadReportPdf } from "@/lib/api/reports";
 import { apiToForm } from "@/lib/utils/mapReport";
 import { formatDate, formatApiError } from "@/lib/utils/format";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -151,6 +151,9 @@ export default function ReportDetailPage() {
             reportId={report.id}
             caseId={report.case_id}
             version={report.version}
+            onDownloadServerPdf={() =>
+              downloadReportPdf(report.id, report.case_id, report.version)
+            }
           />
         </div>
         <div className="space-y-4">

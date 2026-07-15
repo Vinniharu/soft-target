@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { PageSpinner } from "@/components/ui/Spinner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ReportTable } from "@/components/reports/ReportTable";
-import { listMyOrgReports } from "@/lib/api/org";
+import { listMyOrgReports, deleteOrgReport } from "@/lib/api/org";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useToast } from "@/lib/toast/ToastContext";
 import { formatApiError } from "@/lib/utils/format";
@@ -72,6 +72,8 @@ export default function OrgReportsPage() {
             items={items}
             currentUser={user}
             showCreator
+            basePath="/org/reports"
+            onDelete={deleteOrgReport}
             onChange={() => fetchPage(offset)}
           />
           <div className="mt-4 flex items-center justify-between text-sm text-[var(--color-muted-foreground)]">
